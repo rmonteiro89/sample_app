@@ -3,6 +3,8 @@ require 'spec_helper'
 describe "UsersLogins" do
   describe "GET /users_logins" do
     let(:user){ FactoryGirl.create(:user) }
+    let(:other_user) { FactoryGirl.create(:user, name: 'Other', email: 'other@user.com', admin: false) }
+    let(:log_in_other_user) { post login_path, session: { email: other_user.email, password: other_user.password } }
 
     it 'login with invalid information' do
     	get login_path
@@ -45,6 +47,27 @@ describe "UsersLogins" do
                                   remember_me: 0 }
       session[:user_id] = user.id
       expect(cookies['remember_token']).to be nil
+    end
+
+    it "should redirect edit when logged in as wrong user" do
+      log_in_other_user
+      get edit_user_path(user)
+      expect(flash.empty?).to be true
+      expect(response).to redirect_to root_url
+    end
+
+    it "should redirect update when logged in as wrong user" do
+      log_in_other_user
+      patch user_path(user), user: { name: user.name, email: user.email }
+      expect(flash.empty?).to be true
+      expect(response).to redirect_to root_url
+    end
+
+    it "should redirect destroy when logged in as a non-admin" do
+      user #create user
+      log_in_other_user
+      expect{ delete user_path(user) }.to_not change{ User.count }
+      expect(response).to redirect_to root_url
     end
   end
 end
