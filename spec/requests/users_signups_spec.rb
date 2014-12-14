@@ -27,6 +27,7 @@ describe "UsersSignups" do
       count_after = count_before + 1
       expect(User.count).to eq count_after 
       expect(response).to render_template('users/show')
+      expect(session[:user_id].nil?).to be false
   	end
   end
 
